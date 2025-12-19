@@ -1,4 +1,4 @@
-## 강의
+## 👨‍🏫 강의
 ### 1) ArrayList와 LinkedList의 차이점
 ```
 🙋‍♂️ 나: ArrayList는 불변이고, LinkedList는 가변이다.
@@ -98,7 +98,10 @@ ACID도 기억해야한다.
 ```
 
 
-## SLACK 질문
+<br>
+<br>
+
+## 🗨 SLACK 질문
 ### 1) DTO에 SETTER?
 ```
 🙋‍♂️ 나: DTO는 단지 데이터를 운반하는 역할이라 옛날부터 setter을 쓰나마나로 많이 고민했었는데 멘토님의 의견이 궁금합니다.
