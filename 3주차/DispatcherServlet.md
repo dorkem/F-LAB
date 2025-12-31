@@ -199,3 +199,6 @@ void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @
   }
 ```
 
+
+## 그려보기
+<img width="1138" height="960" alt="image" src="https://github.com/user-attachments/assets/393222a2-dc8d-4006-86e0-4c36b6711211" />
