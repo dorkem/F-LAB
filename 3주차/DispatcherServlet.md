@@ -186,6 +186,7 @@ public boolean supports(Object handler) {
 ## `mappedHandler.applyPostHandle(processedRequest, response, mv);`
 - applyPostHandle()은 컨트롤러(핸들러)가 정상 실행된 직후, 뷰가 렌더링되기 전에, 등록된 인터셉터들의 postHandle()을 역순으로 호출하는 코드
   - preHandle에서 순서대로 쌓인 컨텍스트를 안전하게 되돌리기 위한 스택 구조라서 그럼
+  - 여러 페이지에서 공통으로 필요한 데이터를 ModelAndView에 보완하기 위한 단계다.
 - Spring MVC에서는 뷰 렌더링에 필요한 공통 데이터를 컨트롤러 실행 이후, 화면이 만들어지기 직전 단계(postHandle)에서 ModelAndView에 가공·주입함으로써 중복 코드를 제거한다.
 
 ```java
