@@ -12,10 +12,10 @@ public class UserDao {
 	public void add(User user) throws ClassNotFoundException, SQLException {
 		Class.forName("com.mysql.jdbc.Driver");
 		Connection c = DriverManager.getConnection(
-			"jdbc:mysql://localhost/springbook", "root", "");
+			"jdbc:mysql://localhost:3306/toby", "root", "1234");
 
 		PreparedStatement ps = c.prepareStatement(
-			"insert into user values(?,?,?)"
+			"insert into users(id, name, password) values(?,?,?)"
 		);
 		ps.setString(1, user.getId());
 		ps.setString(2, user.getName());
@@ -29,11 +29,12 @@ public class UserDao {
 	public User get(String id) throws ClassNotFoundException, SQLException {
 		Class.forName("com.mysql.jdbc.Driver");
 		Connection c = DriverManager.getConnection(
-			"jdbc:mysql://localhost/springbook", "root", "");
+			"jdbc:mysql://localhost:3306/toby", "root", "1234");
 
 		PreparedStatement ps = c.prepareStatement(
-			"select * from user where id = ?"
+			"select * from users where id = ?"
 		);
+		ps.setString(1, id);
 
 		ResultSet rs = ps.executeQuery();
 		rs.next();
