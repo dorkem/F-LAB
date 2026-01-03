@@ -8,30 +8,28 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import Chapter03.user.dao.DaoFactory;
 import Chapter03.user.dao.UserDao;
+import Chapter03.user.domain.User;
 
 @SpringBootApplication
 public class TobyApplication {
 
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
 		ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
-		UserDao dao1 = context.getBean(UserDao.class);
-		UserDao dao2 = context.getBean(UserDao.class);
+		UserDao dao = context.getBean(UserDao.class);
 
-		System.out.println(dao1);
-		System.out.println(dao2);
-		// User user = new User();
-		// user.setId("whiteship");
-		// user.setName("Toby");
-		// user.setPassword("123456");
-		//
-		// dao.add(user);
-		//
-		// System.out.println(user.getId() + " 등록 성공");
-		//
-		// User user2 = dao.get(user.getId());
-		// System.out.println(user2.getName());
-		// System.out.println(user2.getPassword());
-		//
-		// System.out.println(user2.getId() + " 조회 성공");
+		User user = new User();
+		user.setId("whiteship");
+		user.setName("Toby");
+		user.setPassword("123456");
+
+		dao.add(user);
+
+		System.out.println(user.getId() + " 등록 성공");
+
+		User user2 = dao.get(user.getId());
+		System.out.println(user2.getName());
+		System.out.println(user2.getPassword());
+
+		System.out.println(user2.getId() + " 조회 성공");
 	}
 }

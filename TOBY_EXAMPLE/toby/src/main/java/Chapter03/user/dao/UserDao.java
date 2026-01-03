@@ -17,27 +17,20 @@ public class UserDao {
 	}
 
 	public void add(final User user) throws SQLException {
-		class AddStatement implements StatementStrategy {
-			User user;
+		jdbcContextWithStatmentStrategy(
+			new StatementStrategy() {
+				public PreparedStatement makePrepareStatement(Connection c) throws SQLException {
+					PreparedStatement ps =
+						c.prepareStatement(
+						"insert into users(id, name, password) values(?,?,?)");
+					ps.setString(1, user.getId());
+					ps.setString(2, user.getName());
+					ps.setString(3, user.getPassword());
 
-			public AddStatement(User user){
-				this.user = user;
+					return ps;
+				}
 			}
-
-			@Override
-			public PreparedStatement makePrepareStatement(Connection c) throws SQLException {
-				PreparedStatement ps = c.prepareStatement(
-					"insert into users(id, name, password) values(?,?,?)"
-				);
-				ps.setString(1, user.getId());
-				ps.setString(2, user.getName());
-				ps.setString(3, user.getPassword());
-
-				return ps;
-			}
-		}
-		StatementStrategy st = new AddStatement(user);
-		jdbcContextWithStatmentStrategy(st);
+		);
 	}
 
 	public User get(String id) throws SQLException {
@@ -63,8 +56,13 @@ public class UserDao {
 	}
 
 	public void deleteAll() throws SQLException {
-		StatementStrategy st = new DeleteAllstatment();
-		jdbcContextWithStatmentStrategy(st);
+		jdbcContextWithStatmentStrategy(
+			new StatementStrategy() {
+				public PreparedStatement makePrepareStatement(Connection c) throws SQLException {
+					return c.prepareStatement("delete from users");
+				}
+			}
+		);
 	}
 
 	public int getCount() throws SQLException {
@@ -111,6 +109,7 @@ public class UserDao {
 		try {
 			c = dataSource.getConnection();
 			ps = stmt.makePrepareStatement(c);
+			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw e;
 		} finally {
