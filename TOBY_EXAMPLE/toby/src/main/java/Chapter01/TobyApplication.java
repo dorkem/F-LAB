@@ -4,6 +4,8 @@ import java.sql.SQLException;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import Chapter01.user.dao.ConnectionMaker;
+import Chapter01.user.dao.DConnectionMaker;
 import Chapter01.user.dao.UserDao;
 import Chapter01.user.domain.User;
 
@@ -11,7 +13,9 @@ import Chapter01.user.domain.User;
 public class TobyApplication {
 
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
-		UserDao dao = new UserDao();
+		ConnectionMaker connectionMaker = new DConnectionMaker();
+
+		UserDao dao = new UserDao(connectionMaker);
 
 		User user = new User();
 		user.setId("whiteship");
