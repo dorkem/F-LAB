@@ -1,0 +1,98 @@
+############################
+# HELP / Docs
+############################
+HELP.md
+
+############################
+# Gradle
+############################
+.gradle/
+build/
+out/
+
+# Gradle wrapper (commit 유지)
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Allow build/bin/out inside src (Spring Initializr 기본 규칙)
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+############################
+# STS / Eclipse
+############################
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+
+############################
+# IntelliJ IDEA
+############################
+.idea/
+*.iws
+*.iml
+*.ipr
+
+############################
+# NetBeans
+############################
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+############################
+# VS Code
+############################
+.vscode/
+
+############################
+# Java
+############################
+*.class
+hs_err_pid*
+
+############################
+# Logs
+############################
+logs/
+*.log
+
+############################
+# Database (JDBC / Local DB)
+############################
+# H2
+*.mv.db
+*.trace.db
+*.h2.db
+
+# SQLite 등
+*.db
+
+############################
+# Spring Boot local configs
+############################
+application-local.yml
+application-local.properties
+application-dev.yml
+application-dev.properties
+
+############################
+# macOS
+############################
+.DS_Store
+.AppleDouble
+._*
+.Spotlight-V100
+.Trashes
+Icon?
