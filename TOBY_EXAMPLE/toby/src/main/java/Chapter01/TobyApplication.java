@@ -3,9 +3,9 @@ package Chapter01;
 import java.sql.SQLException;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import Chapter01.user.dao.ConnectionMaker;
-import Chapter01.user.dao.DConnectionMaker;
 import Chapter01.user.dao.DaoFactory;
 import Chapter01.user.dao.UserDao;
 import Chapter01.user.domain.User;
@@ -14,7 +14,8 @@ import Chapter01.user.domain.User;
 public class TobyApplication {
 
 	public static void main(String[] args) throws ClassNotFoundException, SQLException {
-		UserDao dao = new DaoFactory().userDao();
+		ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
+		UserDao dao = context.getBean(UserDao.class);
 
 		User user = new User();
 		user.setId("whiteship");
