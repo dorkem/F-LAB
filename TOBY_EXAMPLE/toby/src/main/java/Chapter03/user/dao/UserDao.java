@@ -59,7 +59,7 @@ public class UserDao {
 
 		try {
 			c = dataSource.getConnection();
-			ps = c.prepareStatement("delete from users");
+			ps = makeStatement(c);
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw e;
@@ -114,5 +114,11 @@ public class UserDao {
 				}
 			}
 		}
+	}
+
+	private PreparedStatement makeStatement(Connection c) throws SQLException {
+		PreparedStatement ps;
+		ps = c.prepareStatement("delete from users");
+		return ps;
 	}
 }
