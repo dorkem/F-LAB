@@ -8,7 +8,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import Chapter01.user.dao.DaoFactory;
 import Chapter01.user.dao.UserDao;
-import Chapter01.user.domain.User;
 
 @SpringBootApplication
 public class TobyApplication {

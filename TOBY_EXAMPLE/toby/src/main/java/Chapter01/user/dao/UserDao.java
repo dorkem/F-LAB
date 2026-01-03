@@ -10,7 +10,7 @@ import Chapter01.user.domain.User;
 public class UserDao {
 	private ConnectionMaker ConnectionMaker;
 
-	public UserDao(ConnectionMaker ConnectionMaker) {
+	public void setConnectionMaker(ConnectionMaker ConnectionMaker) {
 		this.ConnectionMaker = ConnectionMaker;
 	}
 
