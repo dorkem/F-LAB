@@ -20,9 +20,9 @@
     - Online은 메타데이터 락(MDL) 때문에 서비스가 멈추는 문제를 줄이려고 나온 기술
       - ```
         📝 사전 지식
-        	•	UPDATE / INSERT는 레코드 락 (MDL Read Lock)
-        	•	ALTER TABLE은 MDL Write Lock
-        	•	MDL은 “정의(설계도)”를 보호하는 락
+        • UPDATE / INSERT는 레코드 락 (MDL Read Lock)
+        • ALTER TABLE은 MDL Write Lock
+        •	MDL은 “정의(설계도)”를 보호하는 락
         
         🍀 온라인 DDL
          ALTER TABLE 요청
@@ -47,8 +47,37 @@
         ```
       - DDL의 ‘제어’는 단일 스레드라서, 구조 변경을 완성하려면 모든 행을 다시 써야 해서 오래걸림. 따라서 그 작업을 pk기준으로 내부적에서 병렬로 처리한다.
 - `스토리지 엔진락`:
-  - 레코드 락: 인덱스의 레코드를 잠근다. (`where id = 5`라면 id가 5인 행을 잠그면 인덱스에서 잠궈야함)
-  - 갭 락: 
+  - 레코드 락:
+    - 인덱스의 레코드를 잠근다.
+    - `where id = 5`라면 id가 5인 행을 잠그면 인덱스에서 잠궈야함
+    - 인덱스가 없는 컬럼으로 UPDATE를 수행하면 InnoDB는 PK 인덱스를 풀스캔하며, 조건에 해당하는 모든 인덱스 레코드에 하나하나 락을 건다
+  - 갭 락:
+    - 인접한 레코드 사이의 간격만을 잠그는 것(아직 데이터가 없는 인덱스 값 구간에 새 레코드를 못 넣게 막는 것)
+    - pk가 1, 3 이렇게 있다고 쳤을때 `select * from a where id between 1 and 3` 이런식으로 락걸면 다른놈이 2에다 insert같은거 할 때 접근안됨
   - 넥스트 키 락
+    - 레코드 + 갭락
+    - mysql복제시 마스터 서버에는 바이너리 로그를 `STATEMENT` 포멧(무슨 SQL을 실행했는지), `ROW` 포멧(어떤 행이 어떻게 바뀌었는지) 두가지를 사용하는데 레플리카 서버에서는 STATEMENT 포멧을 읽는다. (트랜잭션 시작 할 때와 같은 것을 봐야하니 `REPEATABLE_READ` 격리수준으로 봐야함)
+      - 근데 이건 데드락이 발생하거나 다른 트랜잭션을 기다리게 하는 일이 자주 발생하기 때문에 바이너리 로그 포멧을 ROW로 변경해서 넥스트 키 락 / 갭락을 줄이는게 좋음
   - 자동 증가 락
-  - 
+    - 자동증가 값이 한 번 증가하면 줄어들지 않는 이유는 지금 상태를 보는데 비용이 많이 들기 때문이다.
+   
+<br>
+
+## 5.2 격리 수준
+### 정의
+- 동시에 실행되는 트랜잭션을 서로의 작업을 얼마나 안본척 할 수 있게 할지 정하는 것
+- 트랜잭션A가 끝나지 않았는데 트랜잭션B가 A를 보면 빠르긴 하겠지만 안보는게 안전하다.
+
+### 종류
+- `READ UNCOMMITED` 남이 안끝낸 것도 본다 - Dirty READ
+- `READ COMMITED` 커밋한 것은 본다. 오라클 DBMS 기본으로 언두로그에서 봄
+- `REPEATABLE READ` 내가 트랜잭션을 시작한 시점으로 종료하기 전까지 계속 같은 값을 봄
+- `SERIALIZABLE` 혼자만의 세상
+
+| | Dirty READ | NON - Repeatable read | phantom read |
+|:---:|:---:|:---:|:---:|
+|READ UNCOMMITED|O|O|O|
+|READ COMMITED|X|O|O|
+|REPEATABLE READ|X|X|O|
+|SERIALIZABLE|X|X|X|
+
