@@ -85,6 +85,7 @@ Host: www.naver.com<br>
   - 응답은 `Content-Range`와 `Date` 헤더를 반드시 포함해야하고, `Etag`와 `Content-Location`중 하나의 헤더도 반드시 포함해야함
 
 <br>
+
 **`300-399` 리다이렉션 상태 코드**
 - `300` Multiple Choices
   - 요청한 URL이 가리킬 수 있는 리소스가 여러 개라서, 서버가 후보 목록을 Location 헤더에 담아줌
@@ -106,6 +107,7 @@ Host: www.naver.com<br>
   - 302랑 비슷
   
 <br>
+
 **`400-499` 클라이언트 에러 상태코드**
 - `400` Bad Request
   - 클라이언트가 잘못된 요청을 보냈다.
