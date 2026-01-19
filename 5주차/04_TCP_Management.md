@@ -170,7 +170,7 @@ X-Secret: abc123
 - 한번에 보내면 응답 순서가 반드시 유지돼야 되는데 그게 어려움
 - 앞 요청의 응답이 느리면 뒤 요청의 응답이 전부 대기함 (HOL Blocking)
 - 프록시/서버가 완전히 지원해야 안전
-- TCP자체에서는 패킷의 순서도 맞춰줘야함(TCP HOL Blocking) -> 해결위해 HTTP 3quick(UDP에서 만들어짐)
+- TCP자체에서는 패킷의 순서도 맞춰줘야함(TCP HOL Blocking) -> 해결위해 HTTP/3 QUIC(UDP에서 만들어짐) - 장비단에서 처리하던걸 application 단으로 올려서 로직화?함 (AWS ALB도 그런것처럼 로드벨런서를 로직단으로 올림)
 
 ## 커넥션 끊기
 ### 생긴 이유
