@@ -4,6 +4,7 @@ CPU는 단일 코어에서는 Context Switching을 통해 동시성을 제공하
 이때 스레드 간 공유 자원 영역을 크리티컬 섹션이라 하며, synchronized, Atomic 클래스, concurrent 컬렉션, volatile 등을 통해 동시성 문제를 해결한다.
 
 <br>
+
 ## 병렬성과 동시성
 - 병렬성은 멀티코어 환경에서 여러 작업이 물리적으로 동시에 실행되는 것이며 `Context Switching`이 발생하지 않고, 
 - 동시성은 단일 코어에서도 여러 작업을 빠르게 번갈아 실행하여 동시에 처리되는 것처럼 보이게 하는 방식으로 Context Switching과 RR 스케줄링이 핵심이다. 
