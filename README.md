@@ -5,12 +5,16 @@
 🍀 전체 과정: F-LAB Backend(JAVA) + AI
 ```
 
+<br>
+
 ### 🍙 프로젝트
 ```aiignore
 🗓️ 전체 기간: 2026.01.19 ~ 진행중
 🍀 학습 내용: 주문을 이벤트소싱 아키텍처로 구현
 ```
 🔗 https://github.com/f-lab-edu/woowahan-delivery
+
+<br>
 
 ### 🔥 주차별 학습내용
 |주차|주제|링크|
