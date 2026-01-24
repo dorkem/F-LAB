@@ -3,7 +3,7 @@
   `SRP`는 **응집도를 높이고**, `ISP`와 `DIP`는 불필요한 의존을 제거해 **결합도를 낮추며**, 그 결과 `OCP`가 가능해지고, `LSP`는 이 모든 구조가 다형성 위에서 안전하게 동작하도록 보장한다.
 
 
-## SRP (Single Responsibility Principle, 단일 책임 원칙)
+### SRP (Single Responsibility Principle, 단일 책임 원칙)
 
 - SRP는 “클래스는 하나의 역할과 책임만 가져야 한다”는 원칙이다.
 - 클래스가 여러 책임을 가지면 내부 필드와 메서드의 관련성이 낮아지고(응집도↓),
