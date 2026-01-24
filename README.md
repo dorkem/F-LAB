@@ -23,6 +23,7 @@
 |1주차|Thread|[📁Thread](./1주차/Thread.md)|
 |2주차|Type, Set|[📁2주차 Q&A](./2주차/2주차_강의_QnA.md)|
 |3주차|SRP, OCP, 응집도, 결합도, AOP|[📁3주차 Q&A](./3주차/3주차_강의_QnA.md)|
+|3주차|SOLID|[📁SOLID](./3주차/SOLID.md)|
 |3주차|DispatcherServlet|[📁DispatcherServlet](./3주차/DispatcherServlet.md)|
 |4주차|MVCC|[📁MySQL Chap4 MVCC](./4주차/mysql_chap4.md)|
 |4주차|트랜잭션과 락|[📁MySQL Chap5 Transaction&lock](./4주차/mysql_chap5.md)|
