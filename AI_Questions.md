@@ -85,6 +85,7 @@ OS에 상관없이 동일한 자바 코드를 실행할 수 있다.<br>
 
 <br><br>
 
+# 객체지향
 ## 객체지향의 핵심 원칙과 SOLID에 대해 설명해 주세요.
 
 ### LSP (Liskov Substitution Principle, 리스코프 치환 원칙)
