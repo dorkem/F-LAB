@@ -430,6 +430,8 @@ DispatcherServlet(요청 받음) > HandlerMapping(처리할 컨트롤러를 찾�
 - 슬레이브(Slave)의 I/O 스레드: 마스터의 Binlog를 읽어와서 슬레이브 서버의 Relay Log에 저장
 - 슬레이브(Slave)의 SQL 스레드: Relay Log에 기록된 읽어 실제 DB엔진에 쿼리를 실행함
 
+- 슬레이브가 과부화가 오면 마스터가 계속 데이터를 push하면 터질 수도 있어서 폴링으로 사용함
+
 <br><br>
 
 ## OSI 7계층이 왜 존재하는지 설명해 주세요.
