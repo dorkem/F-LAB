@@ -425,6 +425,13 @@ DispatcherServlet(요청 받음) > HandlerMapping(처리할 컨트롤러를 찾�
 
 <br><br>
 
+## MySQL의 마스터-슬레이브(Master-Slave)
+- 마스터(Master): 데이터 변경 사항을 자신의 Binlog에 기록
+- 슬레이브(Slave)의 I/O 스레드: 마스터의 Binlog를 읽어와서 슬레이브 서버의 Relay Log에 저장
+- 슬레이브(Slave)의 SQL 스레드: Relay Log에 기록된 읽어 실제 DB엔진에 쿼리를 실행함
+
+<br><br>
+
 ## OSI 7계층이 왜 존재하는지 설명해 주세요.
 
 ## JPA에서 연관관계의 주인이란 무엇인가요?
