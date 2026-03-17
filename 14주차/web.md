@@ -140,3 +140,10 @@
 2. 권한 부여: 백엔드 서버가 브라우저에 받은 `Code`를 가로채서 `Client Secret`와 함께 제출 → 코드 검증 후에 진짜 접근 가능한 `Access Token`을 줌
     - `Authorization Code`가 파라미터로 날아오기 때문에 취약하므로, 백엔드 내부에 Client Secret을 둬서 안전하게 로그인 시키기 위함
 3. 자원 요청: Access Token을 헤더에 담아서 리소스 서버에 사용자 정보를 요청함, 사용자 정보를 받아서 DB에 저장하거나 세션을 생성하여 로그인을 완료한다.
+
+
+<br><br>
+
+## Argument Resolver
+- Spring MVC에서 컨트롤러 메서드의 파라미터를 자동으로 변환·주입해주는 컴포넌트
+- `DispatcherServlet.doDispatch()` → `getHandler()` (HandlerMapping 조회) → `getHandlerAdapter()` → `interceptor.preHandle()` → `HandlerAdapter.handle()` → `RequestMappingHandlerAdapter.invokeHandlerMethod()` → `InvocableHandlerMethod.invokeForRequest()` → `getMethodArgumentValues()` 에서 `ArgumentResolver`가 실행
