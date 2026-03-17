@@ -134,8 +134,7 @@
 - Authorization Server(인증 서버): 사용자가 누구인지 확인하고, 서비스에 권한을 줄지 말지 결정해서 토큰을 발급해주는 곳
 - Resource Server(리소스 서버): 사용자의 정보를 가지고 있는 곳
 
-
 ### 전체 프로세스
-1. 사용자 인증: 사용자의 ID/PW입력을 통한 로그인 → 사용자 확인 후 우리 서비스로 `Callback URL`로 사용자를 리다이렉트 시키고, `Authorization Code`를 보냄 (code?=wfjewao~)
+1. 사용자 인증: 사용자의 ID/PW입력을 통한 로그인(인증) → 사용자가 프로필을 제공하는 것에 동의(인가) 후 우리 서비스로 `Callback URL`로 사용자를 리다이렉트 시키고, `Authorization Code`를 보냄 (code?=wfjewao~)
 2. 권한 부여: 백엔드 서버가 브라우저에 받은 `Code`를 가로채서 `Client Secret`와 함께 제출 → 코드 검증 후에 진짜 접근 가능한 `Access Token`을 줌
 3. 자원 요청: Access Token을 헤더에 담아서 리소스 서버에 사용자 정보를 요청함, 사용자 정보를 받아서 DB에 저장하거나 세션을 생성하여 로그인을 완료한다 
