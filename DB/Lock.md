@@ -10,6 +10,13 @@
 ### DB
 - [🦅RealMySQL](https://github.com/dorkem/F-LAB/blob/main/DB/RealMySQL.md)
 - [🔒Lock](https://github.com/dorkem/F-LAB/blob/main/DB/lock.md)
+- [🐬MySql](https://github.com/dorkem/F-LAB/blob/main/DB/MySQL.md)
+- [💰Cache](https://github.com/dorkem/F-LAB/blob/main/DB/Cache.md)
+
+### Web & 네트워크
+- [🕸️HTTP The Definitive Guide](https://github.com/dorkem/F-LAB/blob/main/NETWORK/HTTP-The-Definitive-Guide.md)
+- [🤝🏻TCP](https://github.com/dorkem/F-LAB/blob/main/NETWORK/TCP.md)
+
 
 <br><br><br>
 
@@ -102,3 +109,31 @@
 
 
 <br><br>
+
+## 📍 분산락 (Distributed Lock)
+
+### 문제정의
+- 단일 서버라면 자바의 `synchronized`등으로 해결이 되지만, 서버가 2대인 상황에서는 같은 상품을 동시에 서버 A, B에서 주문이 동시에 들어올 때와 같은 상황에서 문제가 발생한다.
+  - 공통의 관리자가 필요하다.
+ 
+
+### 방법 및 종류
+- 임계 영역에 진입하기 직전에 Redis에 특정 키를 생성해달라고 요청해서 열쇠를 얻은 서버의 로직을 수행함, 작업이 끝나면 레디스에서 해당 키를 삭제해서 다음 순서 실행
+- `Lettuce`(스핀락)은 `SETNX`로 레디스에 키가 있는지 무한으로 물어봐서 부하가 크다.
+- `Redisson`(Pub/Sub)은 락이 풀리면 레디스가 알림을 주는 구조로 부하가 적다.
+  - 대기(Subscribe): 서버 한대가 락을 잡고 있으면, 서버 B는 레디스한테 락 풀리면 알려달라고 기다림
+  - 알림(Publish): 서버 A가 일을 다 마치면 신호를 보냄
+ 
+
+ ### 문제점
+ - `DeadLock`: 서버가 락을 잡고 일하다가 갑자기 죽으면 열쇠가 반납되지 못하는 경우가 발생
+   - 타임아웃을 설정해서 서버가 죽어도 시간이 지나면 자동해제됨(레디스에 키를 걸 때 TTL옵션을 같이 보냄)
+ - 트랜잭셔널 내부에 락을 걸면, 락이 풀리기 전에 누군가 조회하는 경우 옛날 데이터를 볼 수도 있어서, `트랜잭셔널 바깥에서 걸어줘야함`
+ - 락을 api 전체 등 넓은 범위로 잡으면 서비스가 마비될 수 있어서, 좁은 범위로 잡아줘야함
+
+### 거는 법
+1. 레디스에 `lock:user:{userId}` 라는 키가 있는지 확인하고 TTL설정 후, 있다면 구독
+2. 커밋
+3. finally등에 레디스내에 `userId` 키 삭제
+
+
