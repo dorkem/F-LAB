@@ -1,7 +1,9 @@
 # 목차
 ### 자바
 - [🍵자바](https://github.com/dorkem/F-LAB/blob/main/JAVA/java.md)
-- [🧊OOP](https://github.com/dorkem/F-LAB/edit/main/JAVA/OOP.md)
+- [🧊OOP](https://github.com/dorkem/F-LAB/blob/main/JAVA/OOP.md)
+
+<br><br><br><br>
 
 # 📜 객체 지향
 ## 📍 객체와 객체지향
