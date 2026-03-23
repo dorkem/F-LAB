@@ -1,9 +1,25 @@
 # 목차
+
 ### 자바
 - [🍵자바](https://github.com/dorkem/F-LAB/blob/main/JAVA/java.md)
 - [🧊OOP](https://github.com/dorkem/F-LAB/blob/main/JAVA/OOP.md)
 
-<br><br><br><br>
+### 스프링
+- [🍃디스패처 서블릿&리졸버](https://github.com/dorkem/F-LAB/blob/main/SPRING/DispatcherServlet.md)
+
+### DB
+- [🦅RealMySQL](https://github.com/dorkem/F-LAB/blob/main/DB/RealMySQL.md)
+- [🔒Lock](https://github.com/dorkem/F-LAB/blob/main/DB/lock.md)
+- [🐬MySql](https://github.com/dorkem/F-LAB/blob/main/DB/MySQL.md)
+- [💰Cache](https://github.com/dorkem/F-LAB/blob/main/DB/Cache.md)
+
+### Web & 네트워크
+- [🕸️HTTP The Definitive Guide](https://github.com/dorkem/F-LAB/blob/main/NETWORK/HTTP-The-Definitive-Guide.md)
+- [🤝🏻TCP](https://github.com/dorkem/F-LAB/blob/main/NETWORK/TCP.md)
+- [🗝️AUTH](https://github.com/dorkem/F-LAB/blob/main/NETWORK/Login.md)
+
+
+<br><br><br>
 
 # 📜 객체 지향
 ## 📍 객체와 객체지향
@@ -16,6 +32,7 @@
 
 ### `객체지향`
 - 역할, 책임, 협력
+- [🔗 객체지향의 생활 체조 원칙](https://datatracker.ietf.org/doc/html/rfc6749)
 - 역할(인터페이스)
     - 배달원이라는 추상적인 개념으로, 남자든 여자든 서울 출신이든 아니든, 배달만 잘 해주면 된다는 틀(행동 규약)만 정의되어 있으면 됨
 - 책임(구현)
@@ -71,3 +88,6 @@
 - **"구체적인 구현 클래스(세부 구현)가 아닌, 인터페이스(추상화)를 바라보고 의존해야 한다."**
 - 변하기 쉬운 구체적인 것에 의존하지 않게 하여 시스템의 유연성을 높인다.
 
+<br><br>
+
+## 📍일급 컬렉션이란? 
