@@ -5,11 +5,21 @@
 - [🧊OOP](https://github.com/dorkem/F-LAB/blob/main/JAVA/OOP.md)
 
 ### 스프링
-- [🍃디스패처 서블릿](https://github.com/dorkem/F-LAB/blob/main/SPRING/DispatcherServlet.md)
+- [🍃디스패처 서블릿&리졸버](https://github.com/dorkem/F-LAB/blob/main/SPRING/DispatcherServlet.md)
+
+### DB
+- [🦅RealMySQL](https://github.com/dorkem/F-LAB/blob/main/DB/RealMySQL.md)
+- [🔒Lock](https://github.com/dorkem/F-LAB/blob/main/DB/lock.md)
+- [🐬MySql](https://github.com/dorkem/F-LAB/blob/main/DB/MySQL.md)
+- [💰Cache](https://github.com/dorkem/F-LAB/blob/main/DB/Cache.md)
+
+### Web & 네트워크
+- [🕸️HTTP The Definitive Guide](https://github.com/dorkem/F-LAB/blob/main/NETWORK/HTTP-The-Definitive-Guide.md)
+- [🤝🏻TCP](https://github.com/dorkem/F-LAB/blob/main/NETWORK/TCP.md)
 
 <br><br><br>
 
-# 🍃 스프링부트
+# 🍃 디스패처 서블릿
 ##  📍 DispatcherServlet
 
 `comment`
@@ -239,3 +249,12 @@ void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @
 - 12~13) 렌더링 및 변환: * HTML 뷰를 반환할 경우: ViewResolver를 통해 실제 뷰 템플릿을 찾아 렌더링한다.
     - REST API일 경우: HttpMessageConverter가 동작하여 객체를 JSON 등으로 직렬화(Serialization)한다.
 - 14)인터셉터 완료 처리 (afterCompletion): 응답이 클라이언트로 렌더링/전송된 이후에 무조건 실행된다. (예외가 발생했더라도 항상 호출되어 리소스 정리 등에 사용됨)
+
+<br><br><br>
+
+# 🍃 Argument Resolver(알규먼트 리졸버)
+### 개념
+- Spring MVC에서 컨트롤러 메서드의 파라미터를 자동으로 변환하고 주입해 주는 컴포넌트.
+
+### 실행 흐름
+- `DispatcherServlet.doDispatch()` ➡️ `getHandler()` ➡️ `getHandlerAdapter()` ➡️ `interceptor.preHandle()` ➡️ `HandlerAdapter.handle()` ➡️ `RequestMappingHandlerAdapter.invokeHandlerMethod()` ➡️ `InvocableHandlerMethod.invokeForRequest()` ➡️ `getMethodArgumentValues()` 내부에서 `ArgumentResolver`가 실행됨.
