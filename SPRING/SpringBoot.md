@@ -1,4 +1,4 @@
-# 목차
+# 📋 목차
 
 ### 자바
 - [🍵자바](https://github.com/dorkem/F-LAB/blob/main/JAVA/java.md)
@@ -18,6 +18,9 @@
 - [🕸️HTTP The Definitive Guide](https://github.com/dorkem/F-LAB/blob/main/NETWORK/HTTP-The-Definitive-Guide.md)
 - [🤝🏻TCP](https://github.com/dorkem/F-LAB/blob/main/NETWORK/TCP.md)
 - [🗝️AUTH](https://github.com/dorkem/F-LAB/blob/main/NETWORK/Login.md)
+
+### DevOps
+- [🐈‍⬛DevOps](https://github.com/dorkem/F-LAB/blob/main/CICD/DevOps.md)
 
 <br><br><br>
 
