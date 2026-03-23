@@ -90,6 +90,8 @@ protected void doDispatch(HttpServletRequest request, HttpServletResponse respon
 }
 ```
 
+<br><br>
+
 ## `checkMultipart(request)`
 `comment`
 > 요청을 멀티파트 요청으로 변환하고, 멀티파트 리졸버를 사용할 수 있게 한다.
@@ -130,6 +132,8 @@ protected HttpServletRequest checkMultipart(HttpServletRequest request) throws M
 }
 ```
 
+<br><br>
+
 ## `getHandler(processedRequest)`
 `comment`
 > 모든 HandlerMapping들을 순서대로 시도해서 HandlerExecutionChain 또는 핸들러를 찾을 수 없는 경우 null을 반환
@@ -159,6 +163,8 @@ protected @Nullable HandlerExecutionChain getHandler(HttpServletRequest request)
 3. `HandlerExecutionChain` 타입으로 가져옴
    * HandlerExecutionChain 내부에는 handler, interceptor의 리스트가 있다.
 
+
+<br><br>
 
 ## `getHandlerAdapter(mappedHandler.getHandler())`
 - applyPreHandle 이후에 문제가 없으면 getHandlerAdapter를 실행함
@@ -191,9 +197,15 @@ public boolean supports(Object handler) {
 
 2. 이 핸들러가 HandlerMethod가 True면 해당 어댑터가 리턴됨
 
+
+<br><br>
+
 ## `ha.handle(processedRequest, response, mappedHandler.getHandler());`
 - handle을 통해 어댑터를 실행함
 - mv는 `ModelAndView`클래스로 선언되었는데 Model은 컨트롤러 실행 결과 데이터, View는 어떤 화면(뷰)로 보여줄지의 결과가 담겨있다.
+
+
+<br><br>
 
 ## `mappedHandler.applyPostHandle(processedRequest, response, mv);`
 - applyPostHandle()은 컨트롤러(핸들러)가 정상 실행된 직후, 뷰가 렌더링되기 전에, 등록된 인터셉터들의 postHandle()을 역순으로 호출하는 코드
@@ -211,4 +223,19 @@ void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @
   }
 ```
 
+<br><br>
+
+## 흐름도
 <img width="100%" alt="Image" src="https://github.com/user-attachments/assets/46f994b9-f0ca-4a75-8949-2ed64cb49b28" />
+
+### DispatcherServlet 세부 동작 흐름
+
+- 1. 요청 수신: 클라이언트의 모든 HTTP 요청은 Front Controller인 DispatcherServlet이 가장 먼저 받는다. (이때 파일 업로드 등 멀티파트 요청인지 확인)
+- 2~3. 핸들러 조회 (HandlerMapping): 요청 URL(/orders/123)에 매핑된 컨트롤러(핸들러)를 찾는다. 이때 핸들러만 딱 반환하는 것이 아니라, 적용해야 할 인터셉터들을 묶어서 HandlerExecutionChain 형태로 반환한다.
+- 4~5. 어댑터 조회 (HandlerAdapter): 찾은 컨트롤러를 실제로 실행할 수 있는 어댑터를 찾는다. (과거의 Controller 인터페이스, 현재의 @RequestMapping 등 다양한 방식을 모두 지원하기 위함)
+- 6. 인터셉터 전처리 (preHandle): 실제 컨트롤러가 호출되기 전에 공통 로직(인증, 인가, 로깅 등)을 수행한다.
+- 7~10. 실제 로직 실행: 어댑터가 컨트롤러의 메서드를 호출하고, 그 결과(데이터나 뷰 이름)를 ModelAndView로 변환하여 DispatcherServlet에 돌려준다.
+- 11. 인터셉터 후처리 (postHandle): 컨트롤러 실행 직후, 뷰가 렌더링되기 전에 공통 로직을 수행한다. (예외가 발생하면 호출되지 않음)
+- 12~13. 렌더링 및 변환: * HTML 뷰를 반환할 경우: ViewResolver를 통해 실제 뷰 템플릿을 찾아 렌더링한다.
+    - REST API일 경우: HttpMessageConverter가 동작하여 객체를 JSON 등으로 직렬화(Serialization)한다.
+- 14. 인터셉터 완료 처리 (afterCompletion): 응답이 클라이언트로 렌더링/전송된 이후에 무조건 실행된다. (예외가 발생했더라도 항상 호출되어 리소스 정리 등에 사용됨)
