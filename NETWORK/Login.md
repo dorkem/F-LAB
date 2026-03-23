@@ -85,5 +85,5 @@
 
 
 ## OAuth
-
+- [🔗 RFC: THE OAuth 2.0 Authorization Framework](https://datatracker.ietf.org/doc/html/rfc6749)
 <img width="100%" alt="Image" src="https://github.com/user-attachments/assets/33cf7d9c-4c5b-4e6a-8c9c-de313cab815a" />
