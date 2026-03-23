@@ -5,7 +5,7 @@
 - [🧊OOP](https://github.com/dorkem/F-LAB/blob/main/JAVA/OOP.md)
 
 ### 스프링
-- [🍃Spring](https://github.com/dorkem/F-LAB/blob/main/SPRING/DispatcherServlet.md)
+- [🍃디스패처 서블릿](https://github.com/dorkem/F-LAB/blob/main/SPRING/DispatcherServlet.md)
 
 <br><br><br>
 
