@@ -72,54 +72,157 @@
 
 <br><br>
 
-## 📍 Request 스코프 깊게파기
-### 1. 로그인로직을 나중에 추후에 구현했는데, 매 비즈니스 로직에 UserId를 파라미터로 넘겨야하는가?
-- "파라미터 릴레이(Controller  Service $\rightarrow$ Repository로 userId를 계속 넘기는 것)"를 끊어내기 위해서 사용해야한다.
-- 로그인한 유저의 정보를 담을 `UserContext`라는 `클래스`를 만들고, 그 생명주기를 `@Scope("request")`로 설정합니다.
-- 동작 방식
-    - 클라이언트가 API 요청을 보냅니다.
-    - 스프링이 이 요청 전용으로 1회용 `UserContext` 객체를 생성합니다.
-    - 스프링의 `Interceptor`나 `Filter`가 이 요청을 가장 먼저 가로채서 토큰/세션을 검증합니다.
-    - 유저 ID를 이 객체에 쏙 넣어둡니다.
-    - 이후 실행되는 비즈니스 로직에서는 파라미터를 받을 필요 없이, 미리 주입된 `userContext.getUserId()`를 호출하기만 하면 안전하게 데이터를 꺼내 쓸 수 있습니다.
+## 📍 Request 스코프와 ThreadLocal
 
-### 2. 스레드 로컬 (ThreadLocal)
-- 스프링은 수많은 유저가 동시에 요청을 보내도 유저 A와 유저 B의 UserContext 데이터를 헷갈리지 않고 정확히 꺼내주는 기술이 `ThreadLocal`입니다.
-    - 개념: 오직 '현재 실행 중인 스레드(Thread)' 단위로만 접근할 수 있는 개인 금고이다.
-    - 원리: 톰캣 웹 서버는 1개의 HTTP 요청이 들어올 때마다 스레드 풀에서 1개의 스레드를 꺼내어 할당한다.(Thread-per-request 모델)
-    - `@Scope("request")` 빈은 내부적으로 이 `ThreadLocal`을 사용하여 데이터를 저장합니다.
-    - 따라서 유저 A의 요청을 처리하는 스레드는 오직 자신의 ThreadLocal 금고만 열람할 수 있어 다른 유저의 데이터와 절대 섞이지 않는다.
- 
-### 3. DispatcherServlet 내부에서의 생명주기 (Lifecycle)
-- @Scope("request") 빈과 ThreadLocal 데이터는 영원히 살아있지 않고 `DispatcherServlet`의 처리 흐름과 완벽하게 맞물려 생성되고 소멸한다.
-    1. `생성 및 바인딩` (요청 진입)
-       - 클라이언트의 `HTTP 요청`이 톰캣을 거쳐 `DispatcherServlet`으로 진입한다.
-       - 스프링은 이 요청을 현재 스레드의 `ThreadLocal`에 묶어줍니다(바인딩). 이때부터 request 스코프 빈을 생성하고 사용할 수 있는 환경이 열린다.
-    2. `데이터 채우기` (Interceptor - preHandle)
-       - 핸들러(Controller)가 실행되기 직전, Interceptor에서 JWT 등을 까보고 유저 정보를 UserContext 빈에 세팅한다.
-    3. `사용` (Controller & Service)
-       - 실제 비즈니스 로직이 실행되며, 필요한 곳에서 UserContext 빈을 호출해 유저 정보를 사용한다.
-    4. `소멸 및 초기화` (응답 완료 - afterCompletion)
-       - View 렌더링이나 JSON 응답이 클라이언트에게 완전히 전송되고 난 후
-       - `DispatcherServlet`의 마지막 단계에서 스프링은 현재 스레드의 `ThreadLocal`을 완벽하게 비워버리고(초기화) 스레드를 다시 톰캣 스레드 풀로 `반환`하며 생명주기가 끝이난다.
+---
 
-### 4. 트랜잭션 전파 속성과 스레드 분리의 위험성
-- 트랜잭션 전파 속성은 "이미 트랜잭션(A)이 진행 중일 때, 또 다른 트랜잭션 메서드(B)를 호출하면 어떻게 할 것인가?"를 정하는 옵션이다.
-- 그중 `REQUIRES_NEW`는 기존 트랜잭션 A를 잠시 일시 정지시키고, 완전히 독립된 새로운 트랜잭션 B(새로운 DB 커넥션)를 생성하여 실행하는 옵션이다.
-- 로직 B가 실패해 롤백되더라도 메인 로직 A는 타격 없이 끝까지 진행되어야 할 때(예: 에러 로그 기록 등) 사용한다.
+### 1. 왜 필요한가
 
-<br>
+로그인 구현 후 모든 비즈니스 로직에 userId가 필요해졌다고 가정하자.
 
-### 주의해야 할 스레드 분리 장애 포인트
-- `REQUIRES_NEW`를 쓰면 스레드가 분리되어 `Request Scope` 빈을 조회할 때 장애가 날 수 있다
+```
+Controller → Service → Repository
+  userId      userId     userId
+```
 
-- `REQUIRES_NEW` 자체의 동작: 엄밀히 말해 `REQUIRES_NEW`는 새로운 트랜잭션과 커넥션을 맺을 뿐, 스레드 자체를 새로 만들지는 않습니다(동일한 스레드에서 실행됨).
-- 따라서 `REQUIRES_NEW` 안에서도 `ThreadLocal` 기반의 request 스코프 데이터는 정상적으로 꺼내 쓸 수 있다.
+모든 메서드에 userId를 파라미터로 계속 넘겨야 한다. 이걸 **파라미터 릴레이**라고 한다. 코드가 지저분해지고 메서드 추가할 때마다 파라미터도 계속 추가해야 한다.
 
-- 진짜 스레드가 분리되는 상황 (`@Async` 등): 로직을 `비동기`(`@Async`)로 돌리거나, 개발자가 `new Thread()` 등으로 진짜 새로운 스레드를 파생시켰을 때이다.
-- 장애 발생 원리: 새로운 스레드 2번이 파생되는 순간, 이 스레드는 HTTP 요청을 받은 스레드 1번과는 완전히 남남이 된다.
-- 당연히 스레드 2번의 `ThreadLocal` 금고는 비어있고, HTTP 요청 문맥(Context)도 없다.
-- 이 상태에서 스레드 2번이 유저 정보를 꺼내려고 `@Scope("request")` 컴포넌트를 호출하면, "이 스레드에는 요청 정보가 없습니다!"라며 즉시 에러(`ScopeNotActiveException`)를 던지고 시스템이 뻗어버린다.
+이걸 끊어내기 위해 **UserContext** 라는 클래스를 만들고 거기에 userId를 저장해둔다.
 
-- 즉, "리퀘스트 스코프는 철저하게 단일 스레드(`ThreadLocal`)에 의존하므로, 트랜잭션 분리나 비동기 처리 과정에서 스레드 컨텍스트가 엇갈려 정보가 유실되는 문제가 없어야한다."
+```java
+@Component
+@Scope("request")   // ← 핵심, 요청 1개당 객체 1개 생성
+public class UserContext {
+    private Long userId;
+}
+```
+
+이러면 파라미터 없이 어디서든 꺼내 쓸 수 있다.
+
+```java
+// 파라미터 릴레이 방식 (나쁜 것)
+public Order createOrder(Long userId, ...) { ... }
+
+// UserContext 방식 (좋은 것)
+public Order createOrder(...) {
+    Long userId = userContext.getUserId();   // 그냥 꺼내씀
+}
+```
+
+---
+
+### 2. ThreadLocal — 어떻게 사용자별로 안 섞이나
+
+유저 1000명이 동시에 요청을 보내면 UserContext도 1000개가 생긴다.
+
+그럼 유저A의 UserContext랑 유저B의 UserContext가 섞이지 않을까?
+
+**안 섞이는 이유가 ThreadLocal이다.**
+
+톰캣은 요청이 들어올 때마다 **스레드를 1개씩 배정**한다.
+
+```
+유저A 요청 → 스레드1 배정
+유저B 요청 → 스레드2 배정
+유저C 요청 → 스레드3 배정
+```
+
+ThreadLocal은 **스레드마다 따로 존재하는 개인 금고**다.
+
+```
+스레드1의 금고: { userId: 1 }   ← 유저A 정보
+스레드2의 금고: { userId: 2 }   ← 유저B 정보
+스레드3의 금고: { userId: 3 }   ← 유저C 정보
+```
+
+스레드1은 자기 금고만 열 수 있으니 절대 섞이지 않는다.
+
+---
+
+### 3. 요청 하나의 생명주기
+
+```
+클라이언트 요청 들어옴
+    ↓
+톰캣이 스레드 배정
+    ↓
+DispatcherServlet이 요청을 ThreadLocal에 묶음 (바인딩)
+    ↓
+Interceptor - preHandle 실행
+JWT 토큰 검증 후 UserContext에 userId 저장
+    ↓
+Controller → Service → Repository 실행
+userContext.getUserId() 로 꺼내씀
+    ↓
+응답 완료
+    ↓
+DispatcherServlet이 ThreadLocal 완전히 비움
+스레드를 다시 스레드 풀에 반환
+```
+
+UserContext는 **요청이 시작될 때 생기고, 응답이 끝나면 바로 사라진다.**
+
+---
+
+### 4. 스레드가 분리되면 터진다
+
+**REQUIRES_NEW (트랜잭션 분리)**
+
+트랜잭션이 실행 중일 때 또 다른 트랜잭션을 호출하면 어떻게 할지 정하는 옵션이다.
+
+```
+트랜잭션A 실행 중
+    ↓
+REQUIRES_NEW로 트랜잭션B 호출
+    ↓
+트랜잭션A 잠시 멈춤
+트랜잭션B 독립적으로 실행
+    ↓
+B가 실패해서 롤백돼도 A는 멀쩡히 계속 진행
+```
+
+주로 에러 로그 기록처럼 **메인 로직 실패와 상관없이 무조건 저장해야 할 때** 사용한다.
+
+REQUIRES_NEW는 스레드를 새로 만들지 않는다. **같은 스레드에서 실행**되므로 ThreadLocal 금고를 그대로 쓸 수 있다. 문제없다.
+
+---
+
+**진짜 문제는 @Async (비동기)**
+
+```
+스레드1 (유저A 요청 처리 중)
+    ↓
+@Async 메서드 호출
+    ↓
+스레드2 (새로 생성됨)
+    ↓
+스레드2가 userContext.getUserId() 호출
+    ↓
+💥 ScopeNotActiveException 에러
+```
+
+왜 터지냐면:
+
+```
+스레드1의 금고: { userId: 1 }   ← 유저A 정보 있음
+스레드2의 금고: {  }            ← 텅 비어있음
+```
+
+스레드2는 HTTP 요청을 받은 스레드가 아니라 새로 생긴 스레드다. 금고가 비어있으니 꺼낼 게 없어서 즉시 에러가 난다.
+
+---
+
+### 한눈에 정리
+
+```
+UserContext     = userId를 저장해두는 바구니
+@Scope("request") = 요청 1개당 바구니 1개 생성
+ThreadLocal     = 스레드마다 따로 있는 개인 금고
+                  유저별로 데이터가 절대 안 섞이는 이유
+
+REQUIRES_NEW    = 같은 스레드, 금고 공유 → 문제없음
+@Async          = 새 스레드 생성, 금고 비어있음 → 즉시 에러
+```
+
+**Request 스코프는 철저하게 하나의 스레드에 의존한다. 새 스레드가 생기는 순간 유저 정보가 없어서 터진다.**
 
