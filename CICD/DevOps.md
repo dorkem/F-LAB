@@ -513,3 +513,324 @@ HTTPS   = HTTP + SSL
    - 테스트 통과 여부는 PR 상태 창에 초록색/빨간색으로 표시되며, 실패할 경우 물리적으로 Merge 버튼이 비활성화(Block)되어 불량 코드가 메인에 합쳐지는 것을 원천 차단합니다.
 - 결론 및 효과
    - 단순 반복 작업에서 해방되어 개발과 핵심 비즈니스 로직에만 집중할 수 있게 되었습니다. 테스트 자동화 시스템이 월 약 133시간(개발자 1명의 한 달 업무 시간)의 대기 시간을 대신 처리해 주어, 사실상 개발자 1명을 추가 채용한 것과 같은 막대한 리소스 절약 효과를 얻었습니다.
+
+
+<br><br>
+
+# 블루-그린 배포 전체 정리
+
+---
+
+## 1. 파일 구조와 역할
+
+```
+/etc/nginx/
+├── nginx.conf                    ← 기존 파일 그대로 (건드리지 않음)
+├── conf.d/
+│   └── woowahan-delivery.conf   ← 공통 설정 (server, location 등)
+├── blue.conf                    ← 블루 서버 upstream 정의
+├── green.conf                   ← 그린 서버 upstream 정의
+├── active.conf                  ← 심볼릭 링크 (blue or green 가리킴)
+└── current                      ← "blue" 또는 "green" 텍스트 저장
+
+/usr/local/bin/
+└── switch.sh                    ← 트래픽 전환 스크립트
+```
+
+### woowahan-delivery.conf
+```nginx
+include /etc/nginx/active.conf;   # upstream 불러오기 (blue or green)
+
+server {
+    listen 80;
+    server_name woowahan-delivery.site;
+
+    # 프론트
+    location / {
+        # root: 폴더 위치
+        root /var/www/woowahan-delivery;
+        # 기본 파일 명
+        index index.html;
+        # SPA에서 필요한 설정
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 백엔드
+    location /api/ {
+        # 블루그린에 app_backend가 뭔지 upstream으로 정의
+        proxy_pass http://app_backend;
+        proxy_http_version 1.1;
+        # Nginx가 아닌 원래 도메인 주소를 Host 헤더에 담아보냄
+        proxy_set_header Host              $host;
+        # 실제 클라이언트 IP
+        proxy_set_header X-Real-IP         $remote_addr;
+        # 거쳐온 IP 목록
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        # http인지 https로 왔는지
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # 커넥션 찌꺼기 제거(1.0은 Connection: close가 붙어서 오기 때문에)
+        proxy_set_header Connection        "";
+    }
+}
+```
+
+### blue.conf
+```nginx
+upstream app_backend {
+    server 172.31.46.33:8081;  # 블루 서버 IP
+    keepalive 32;
+}
+```
+
+### green.conf
+```nginx
+upstream app_backend {
+    server 172.31.7.248:8081;  # 그린 서버 IP
+    keepalive 32;
+}
+```
+
+---
+
+## 2. 초기 설정 명령어 (최초 1회)
+
+### 심볼릭 링크 생성(바로가기)
+```bash
+sudo ln -sf /etc/nginx/blue.conf /etc/nginx/active.conf
+```
+- `ln` : 링크 파일 만드는 명령어
+- `-s` : 심볼릭 링크 (실제 파일 복사가 아니라 가리키는 포인터)
+- `-f` : 이미 있으면 덮어씌우기 (force)
+- 결과: `active.conf → blue.conf` 로 연결됨
+- nginx가 `active.conf`를 읽으면 실제로는 `blue.conf` 내용을 읽는 것
+
+### current 파일 생성
+```bash
+echo "blue" | sudo tee /etc/nginx/current
+```
+- `echo "blue"` : "blue" 텍스트 출력
+- `| sudo tee` : 그 출력을 sudo 권한으로 파일에 씀
+- 왜 `sudo echo "blue" > /etc/nginx/current` 안 되냐면:
+  - `>` 리다이렉션은 sudo 권한을 못 받음
+  - echo만 sudo로 실행되고 파일 쓰기는 일반 권한 → Permission denied
+- current 파일은 switch.sh가 "지금 어느 쪽이 운영중인지" 읽는 용도
+
+### switch.sh 실행 권한
+```bash
+sudo chmod +x /usr/local/bin/switch.sh
+```
+- `chmod` : 파일 권한 변경
+- `+x` : 실행 권한 추가
+- conf 파일들은 nginx가 읽기만 해서 불필요, 스크립트만 필요
+
+### nginx 설정 확인 및 적용
+```bash
+sudo nginx -t && sudo nginx -s reload
+```
+- `nginx -t` : 설정 파일 문법 검사 (test)
+- `&&` : 앞 명령어 성공했을 때만 뒤 명령어 실행
+- `nginx -s reload` : nginx에 reload 신호 전송
+  - `-s` : signal (신호를 보내는 옵션)
+  - `reload` : 프로세스 재시작 없이 설정만 다시 읽음
+  - 기존 연결은 유지, 새 연결부터 새 설정 적용
+
+---
+
+## 3. switch.sh 설명
+
+```bash
+#!/bin/bash
+set -e  # 에러 발생하면 즉시 중단
+
+CURRENT=$(cat /etc/nginx/current)  # current 파일 읽어서 변수에 저장
+
+if [ "$CURRENT" == "blue" ]; then
+    # 현재 블루면 → 그린으로 전환
+    ln -sf /etc/nginx/green.conf /etc/nginx/active.conf
+    echo "green" | tee /etc/nginx/current
+    echo "✅ 블루 → 그린 전환 완료"
+else
+    # 현재 그린이면 → 블루로 전환
+    ln -sf /etc/nginx/blue.conf /etc/nginx/active.conf
+    echo "blue" | tee /etc/nginx/current
+    echo "✅ 그린 → 블루 전환 완료"
+fi
+
+nginx -t && nginx -s reload  # 검증 후 적용
+```
+
+동작 순서:
+1. current 파일 읽어서 현재 운영 환경 파악
+2. 반대쪽으로 심볼릭 링크 교체
+3. current 파일 업데이트
+4. nginx reload로 트래픽 전환
+
+---
+
+## 4. GitHub Actions 스크립트 설명
+
+```yaml
+name: 🚀 Deploy to Production (master)
+
+on:
+  push:
+    branches:
+      - master  # master 브랜치에 push할 때만 실행
+```
+
+### build 잡
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+        # 깃허브 레포 코드를 액션 서버로 가져옴
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+        # 빌드에 필요한 자바 설치
+
+      - name: 프론트엔드 빌드
+        run: |
+          cd frontend
+          npm install
+          npm run build
+        # React 등 프론트 빌드 → dist/ 폴더 생성
+
+      - name: 백엔드 빌드
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
+        # JAR 파일 생성 (-x test: 테스트 생략)
+
+      # 빌드 결과물을 다음 잡에서 쓸 수 있게 저장
+      - name: 아티팩트 저장 (JAR)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+          retention-days: 1  # 1일 후 자동 삭제
+```
+
+### deploy 잡
+```yaml
+  deploy:
+    needs: build  # build 잡이 성공해야만 실행
+    steps:
+      # 아티팩트 다운로드 (build 잡에서 저장한 것들)
+      - name: 아티팩트 다운로드 (JAR)
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/
+
+      # nginx 서버에서 현재 운영 환경 확인
+      - name: 현재 active 환경 확인
+        id: current  # 이 스텝 결과를 다른 스텝에서 참조할 수 있게 id 부여
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.LB_SERVER_HOST }}
+          script: cat /etc/nginx/current
+          # "blue" 또는 "green" 반환
+
+      # 현재 블루면 그린 서버로, 그린이면 블루 서버로 배포
+      - name: 비활성 서버에 JAR 전송
+        uses: appleboy/scp-action@v1
+        with:
+          # steps.current.outputs.result: 위 스텝에서 cat한 결과값
+          host: ${{ steps.current.outputs.result == 'blue'
+                    && secrets.APP_SERVER_HOST_2   # 블루 운영중 → 그린(HOST_2)으로
+                    || secrets.APP_SERVER_HOST_1 }} # 그린 운영중 → 블루(HOST_1)으로
+          source: "build/libs/*.jar"
+          target: "/home/ec2-user/woowahan-delivery"
+          strip_components: 2  # build/libs/ 경로 제거하고 파일만 전송
+
+      # 비활성 서버 앱 재시작
+      - name: 비활성 서버 앱 실행
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ steps.current.outputs.result == 'blue'
+                    && secrets.APP_SERVER_HOST_2
+                    || secrets.APP_SERVER_HOST_1 }}
+          script: |
+            cd /home/ec2-user/woowahan-delivery
+            chmod +x deploy.sh
+            ./deploy.sh prod
+
+      # 프론트엔드는 항상 nginx 서버로
+      - name: 프론트엔드 전송
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.LB_SERVER_HOST }}
+          source: "frontend/dist/**"
+          target: "/var/www/woowahan-delivery"
+          strip_components: 2
+
+      # switch.sh 실행 → 트래픽 전환
+      - name: nginx 트래픽 전환
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.LB_SERVER_HOST }}
+          script: sudo /usr/local/bin/switch.sh
+          # 이 한 줄이 블루↔그린 전환의 전부
+```
+
+---
+
+## 5. 전체 배포 흐름 (push 이후)
+
+```
+git push
+    ↓
+[build 잡]
+코드 체크아웃 → 프론트 빌드 → JAR 빌드 → 아티팩트 저장
+    ↓
+[deploy 잡]
+① nginx 서버에서 current 파일 읽기 ("blue")
+② 그린 서버(비활성)에 JAR 전송
+③ 그린 서버 앱 재시작
+④ nginx 서버에 프론트엔드 전송
+⑤ switch.sh 실행
+   → active.conf를 green.conf로 교체
+   → current 파일을 "green"으로 업데이트
+   → nginx -s reload
+    ↓
+배포 완료 (트래픽이 그린으로 전환됨)
+```
+
+---
+
+## 6. 폴더 구조
+```
+/etc/nginx/
+├── conf.d/
+│   └── woowahan-delivery.conf   ← 여기만 *.conf에 해당
+├── blue.conf                    ← conf.d 밖이라 와일드카드 안 걸림
+├── green.conf                   ← conf.d 밖이라 와일드카드 안 걸림
+└── active.conf                  ← conf.d 밖이라 와일드카드 안 걸림
+```
+
+---
+
+
+## 7. 동작순서
+
+```
+nginx reload
+(nginx.conf 내에 include /etc/nginx/conf.d/*.conf; 이므로 conf.d 폴더 내의 .conf확장자는 모두 include함)
+    ↓
+woowahan-delivery.conf 읽음
+    ↓
+include /etc/nginx/active.conf 발견
+    ↓
+active.conf 읽음 (이미 green.conf로 바뀐 상태)
+    ↓
+green.conf 내용 적용
+    ↓
+트래픽 그린으로 전환 완료
+```
